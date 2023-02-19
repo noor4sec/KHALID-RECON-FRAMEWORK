@@ -32,17 +32,14 @@ if [ ! -d "$target/subs-vuln" ]; then
           mkdir $target/subs-vuln
 fi
 
-if [ ! -d "$target/subs-vuln/false_positive" ]; then
-          mkdir $target/subs-vuln/false_positive
+if [ ! -d "$target/subs-vuln/false-positive" ]; then
+          mkdir $target/subs-vuln/false-positive
 fi
 
 if [ ! -d "$target/params-vuln/false-positive" ]; then
           mkdir $target/params-vuln/false-positive
 fi
 
-if [ ! -d "$target/recon/EyeWitness" ]; then
-      mkdir $target/recon/EyeWitness
-fi
 #---------------------------------------------------------------------------------
 #-----------------------------Finding SubDomains----------------------------------
 #----------------------------------------------------------------------------------
@@ -80,7 +77,7 @@ echo "[+]Analyzing Both httpx && httprobe...."
 cat $target/recon/live-check.txt | sed 's/https\?:\/\///' | sort -u | tee $target/recon/live-subs.txt 
 rm $target/recon/live-check.txt
 
-echo "[+]Total Unique Live SubDomains....."
+echo "[+]Total Unique Live SubDomains...."
 cat $target/recon/live-subs.txt | wc -l
 #--------------------------------------------------------------------------------------------------
 #-----------------------------------Enumurating Parameters-----------------------------------------
@@ -88,19 +85,19 @@ cat $target/recon/live-subs.txt | wc -l
 echo "[+]Enumurating Params From Paramspider...." 
 python3 /opt/ParamSpider/paramspider.py --level high -d $target -p khalid -o $1/recon/test-params.txt
 echo "[+]Enumurating Params From Waybackurls...." 
-cat $1/recon/live_subs.txt | waybackurls | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
+cat $1/recon/live-subs.txt | waybackurls | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 echo "[+]Enumurating Params From gau Tool...." 
 gau --subs  $target  | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 echo "[+]Enumurating Params From gauPlus Tool...." 
-cat $target/recon/live_subs.txt | gauplus | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
+cat $target/recon/live-subs.txt | gauplus | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 
 echo "[+]Filtering Dups..." 
-$1/recon/test-params.txt | sort -u | tee $target/recon/final-urls.txt 
+$1/recon/test-params.txt | sort -u | tee $target/recon/final-params.txt 
 
 rm $1/recon/test-params.txt
 
 echo "[+]Total Unique Params Found...." 
-cat $target/recon/final-urls.txt | wc -l
+cat $target/recon/final-params.txt | wc -l
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Fuzzing For Open Redirects----------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -110,7 +107,7 @@ cat $target/recon/final-params.txt | qsreplace 'https://evil.com' | while read h
 #-------------------------------Checking For HTMLi Injection---------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing For HTML Injection...." 
-cat $target/recon/final-params.txt | qsreplace '"><u>hyper</u>' | tee $target/recon/htmli-test.txt && cat $target/recon/htmli-test.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host" ; done >> $url/params-vuln/htmli.txt
+cat $target/recon/final-params.txt | qsreplace '"><u>hyper</u>' | tee $target/recon/htmli-test.txt && cat $target/recon/htmli-test.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host" ; done >> $target/params-vuln/htmli.txt
 rm $target/recon/htmli-test.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For XSS Injection-----------------------------------------
@@ -157,7 +154,7 @@ cat $target/recon/final-params.txt | qsreplace FUZZ | while read host ; do ffuf 
 #-------------------------Fuzzing Params With Nuclei ----------------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing Params With Nuclei Fuzzing Templates..."
-
+cat $target/recon/final-params.txt | nuclei -t /root/fuzzing-templates >> $target/params-vuln/nuclei.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Scannning HTTP Parameter Smuggling---------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -176,7 +173,7 @@ cat $1/recon/live-subs.txt | nuclei -t /root/nuclei-templates/ >> $1/subs-vuln/n
 #-------------------------------------Full Scan With Nikto----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+] Full Scan With Nikto...." 
-nikto -h $target/recon/live-subs.txt > $url/subs-vuln/nikto.txt
+nikto -h $target/recon/live-subs.txt > $target/subs-vuln/nikto.txt
 #------------------------------------------------------------------------------------------------------------
 #----------------------------------------------Checking For CORS---------------------------------------------
 #------------------------------------------------------------------------------------------------------------
