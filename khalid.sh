@@ -44,7 +44,7 @@ fi
 #-----------------------------Finding SubDomains----------------------------------
 #----------------------------------------------------------------------------------
 echo "[+]Enumurating SubDomains Using Amass..." 
-amass enum -d $target >> $target/recon/subs.txt
+#amass enum -d $target >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using Assetfinder..." 
 assetfinder $target >> $target/recon/subs.txt
