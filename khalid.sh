@@ -92,7 +92,7 @@ echo "[+]Enumurating Params From gauPlus Tool...."
 cat $target/recon/live-subs.txt | gauplus | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 
 echo "[+]Filtering Dups..." 
-$1/recon/test-params.txt | sort -u | tee $target/recon/final-params.txt 
+cat $1/recon/test-params.txt | sort -u | tee $target/recon/final-params.txt 
 
 rm $1/recon/test-params.txt
 
