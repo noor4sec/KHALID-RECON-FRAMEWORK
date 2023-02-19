@@ -118,7 +118,7 @@ rm $target/recon/htmli-test.txt
 #-------------------------------Checking For Command Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing For Command Injection...." 
-python3 /opt/commix/commix.py -m $target/recon/final-params.txt --batch 
+#python3 /opt/commix/commix.py -m $target/recon/final-params.txt --batch 
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For CRLF Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ crlfuzz -l $target/recon/final-params.txt -o $target/params-vuln/crlf.txt -s
 #-------------------------------Checking For SQL Injection-----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Testing For SQL Injection...." 
-cat $target/recon/final-params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2 
+#cat $target/recon/final-params.txt | python3 /opt/sqlmap/sqlmap.py --level 2 --risk 2 
 #--------------------------------------------------------------------------------------------------
 #-----------------------------------Checking For SSRF----------------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -143,13 +143,11 @@ rm $target/recon/ssrftest.txt
 #-------------------------------Checking For Local File Inclusion----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Scanning For Local File Inclusion...."
-cat $target/recon/final-params.txt | qsreplace FUZZ | while read host ; do ffuf -u $host -v -mr "root:x" -w /opt/payloads/lfi-small.txt ; done > $1/params-vuln/lfi.txt
+cat $target/recon/final-params.txt | qsreplace FUZZ | while read url ; do ffuf -u $url -v -mr "root:x" -w /opt/payloads/lfi-small.txt ; done >> $1/params-vuln/lfi.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------Checking For Server Side Template Injection-----------------------------
 #--------------------------------------------------------------------------------------------------
-
-
-
+cat $target/recon/final-params.txt | qsreplace FUZZ | while read url ; do ffuf -u $url -v -mr "noor49" -w /opt/payloads/ssti-payloads.txt ; done >> $1/params-vuln/ssti.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------Fuzzing Params With Nuclei ----------------------------------------------
 #--------------------------------------------------------------------------------------------------
