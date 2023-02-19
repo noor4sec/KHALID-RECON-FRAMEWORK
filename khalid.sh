@@ -163,7 +163,7 @@ cat $target/recon/final-params.txt | nuclei -t /root/fuzzing-templates >> $targe
 #-------------------------------Checking For SubDomain TakeOver------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Testing For SubTakeOver" 
-subzy --targets  $url/recon/final_subs.txt  --hide_fails >> $target/sub_take_over.txt
+subzy --targets  $url/recon/final_subs.txt  --hide_fails >> $target/subs-vuln/take-over.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------------Full Scan With Nuclei----------------------------------------
 #--------------------------------------------------------------------------------------------------
