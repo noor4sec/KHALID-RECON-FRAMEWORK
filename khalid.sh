@@ -68,10 +68,10 @@ cat $target/recon/final-subs.txt | wc -l
 #-----------------------------------Filtering Live SubDomains--------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Removing Dead Domains Using httpx....." 
-$target/recon/final-subs.txt  | httpx --silent  >> $target/recon/live-check.txt
+cat $target/recon/final-subs.txt  | httpx --silent  >> $target/recon/live-check.txt
 
 echo "[+]Removing Dead Domains Using httprobe....." 
-$target/recon/final-subs.txt  | httprobe >> $target/recon/live-check.txt
+cat $target/recon/final-subs.txt  | httprobe >> $target/recon/live-check.txt
 
 echo "[+]Analyzing Both httpx && httprobe...."
 cat $target/recon/live-check.txt | sed 's/https\?:\/\///' | sort -u | tee $target/recon/live-subs.txt 
