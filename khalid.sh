@@ -50,7 +50,7 @@ echo "[+]Enumurating SubDomains Using Assetfinder..."
 assetfinder $target >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using SubFinder..."
-subfinder -d $target -o $target/recon/subs.txt
+subfinder -d $target --silent >> $target/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using Findomain..." 
 findomain -t $target -q >> $target/recon/subs.txt
@@ -90,9 +90,11 @@ echo "[+]Enumurating Params From gau Tool...."
 gau --subs  $target  | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 echo "[+]Enumurating Params From gauPlus Tool...." 
 cat $target/recon/live-subs.txt | gauplus | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
+echo "[+]Enumurating Params Using Katana Tool...."
+cat $target/recon/live-subs.txt | httpx --silent | katana -d 300 | grep = | qsreplace khalid | sort -u >> $1/recon/test-params.txt
 
 echo "[+]Filtering Dups..." 
-cat $1/recon/test-params.txt | sort -u | tee $target/recon/final-params.txt 
+cat $1/recon/test-params.txt | sort -u >> tee $target/recon/final-params.txt 
 
 rm $1/recon/test-params.txt
 
@@ -152,7 +154,7 @@ cat $target/recon/final-params.txt | qsreplace FUZZ | while read url ; do ffuf -
 #-------------------------Fuzzing Params With Nuclei ----------------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+]Fuzzing Params With Nuclei Fuzzing Templates..."
-cat $target/recon/final-params.txt | nuclei -t /root/fuzzing-templates >> $target/params-vuln/nuclei.txt
+cat $target/recon/final-params.txt | nuclei -t /root/fuzzing-templates -rl 3 -c 2 >> $target/params-vuln/nuclei.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Scannning HTTP Parameter Smuggling---------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -166,12 +168,12 @@ subzy --targets  $url/recon/final_subs.txt  --hide_fails >> $target/subs-vuln/ta
 #-------------------------------------Full Scan With Nuclei----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+] Full Scan With Nuclei......." 
-cat $1/recon/live-subs.txt | nuclei -t /root/nuclei-templates/ >> $1/subs-vuln/nuclei.txt
+cat $1/recon/live-subs.txt | nuclei -t /root/nuclei-templates/ -rl 3 -c 2 >> $1/subs-vuln/nuclei.txt
 #--------------------------------------------------------------------------------------------------
 #-------------------------------------Full Scan With Nikto----------------------------------------
 #--------------------------------------------------------------------------------------------------
 echo "[+] Full Scan With Nikto...." 
-nikto -h $target/recon/live-subs.txt > $target/subs-vuln/nikto.txt
+nikto -h $target/recon/live-subs.txt >> $target/subs-vuln/nikto.txt
 #------------------------------------------------------------------------------------------------------------
 #----------------------------------------------Checking For CORS---------------------------------------------
 #------------------------------------------------------------------------------------------------------------
@@ -180,7 +182,7 @@ nikto -h $target/recon/live-subs.txt > $target/subs-vuln/nikto.txt
 #------------------------------------------------------------------------------------------------------------
 #--------------------------------------Checking For XSS through Referer Header-------------------------------
 #------------------------------------------------------------------------------------------------------------
-echo "[+]Checking For Xss in Referer Header...." | lolcat
+echo "[+]Checking For Xss in Referer Header...." 
 cat $target/recon/live-subs.txt | while read host do ; do curl $host --silent --path-as-is --insecure -L -I -H Referer: https://beebom.com/ | grep "beebom.com" && echo "$host" ; done >> $url/subs-vuln/xss-refer.txt
 
 figlet "Recon v2"
