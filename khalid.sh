@@ -60,6 +60,8 @@ python3 /opt/Sublist3r/sublist3r.py -d $target -o $1/recon/subs.txt
 
 echo "[+]Enumurating SubDomains Using crt.sh...."
 curl -s "https://crt.sh/?q=%25.$target&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u  >> $target/recon/subs.txt
+echo "[+]Enumurating SubDomains Using threatcrowd...."
+curl -s "https://www.threatcrowd.org/searchApi/v2/domain/report/?domain=$target" | jq -r '.subdomains[]' | sort -u >> $target/recon/subs.txt
 
 echo "[+]Filtering Repeated Domains..." 
 cat $target/recon/subs.txt | grep $target | sort -u | tee $target/recon/final-subs.txt 
