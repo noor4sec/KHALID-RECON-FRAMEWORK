@@ -58,8 +58,12 @@ findomain -t $target -q >> $target/recon/subs.txt
 echo "[+]Enumurating SubDomains Using Sublist3r..."
 python3 /opt/Sublist3r/sublist3r.py -d $target -o $1/recon/subs.txt
 
+echo "[+]Enumurating SubDomains Using Brute Forcing Technique..."
+ffuf -u "https://FUZZ.$target" -w /opt/payloads/subs-brute.txt -v | grep "| URL |" | awk '{print $4} ' | sed 's/^http[s]:\/\///g' >> $target/recon/subs.txt
+
 echo "[+]Enumurating SubDomains Using crt.sh...."
 curl -s "https://crt.sh/?q=%25.$target&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u  >> $target/recon/subs.txt
+
 echo "[+]Enumurating SubDomains Using threatcrowd...."
 curl -s "https://www.threatcrowd.org/searchApi/v2/domain/report/?domain=$target" | jq -r '.subdomains[]' | sort -u >> $target/recon/subs.txt
 
@@ -163,7 +167,7 @@ cat $target/recon/final-params.txt | nuclei -t /root/fuzzing-templates -rl 3 -c 
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Scannning HTTP Parameter Smuggling---------------------------------
 #--------------------------------------------------------------------------------------------------
-#figlet "Fuzzing Domains"
+
 #--------------------------------------------------------------------------------------------------
 #-------------------------------Checking For SubDomain TakeOver------------------------------------
 #--------------------------------------------------------------------------------------------------
